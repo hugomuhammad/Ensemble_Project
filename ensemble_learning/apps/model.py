@@ -36,7 +36,7 @@ def app():
 
         #mencari kolom dengan unique value = 2
         for i in range (len(dataframe.columns)):         
-            if dataframe[dataframe.columns[i]].nunique() == 2:
+            if dataframe[dataframe.columns[i]].nunique() == 2 or dataframe.columns[i] == 'Jalur Masuk':
                 cls.append(i)
         #mengganti kolom dengan unique value = 2 dari data categorical -> numeric
         for i in cls:

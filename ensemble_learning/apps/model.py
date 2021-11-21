@@ -1,3 +1,4 @@
+from pandas.core.frame import DataFrame
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -20,11 +21,15 @@ def app():
     #menyimpan file yang diupload ke variabel dataset_name
     dataset_name = st.file_uploader("Choose a file")
     if dataset_name is not None:
-        dataframe = pd.read_csv(dataset_name)    
+        dataframe = pd.read_csv(dataset_name) 
+
+    df = dataframe.copy()   
 
     #menampilkan opsi model / classsifier
     #menyimpan pilihan pada variabel classifier_name
     classifier_name = st.sidebar.selectbox("Select Classifier", ("KNN","SVM","Ensemble"))
+
+    st.write(dataframe)
 
 
     #fungsi praproses data
@@ -32,38 +37,34 @@ def app():
         cls = [] #list kolom dengan jumlah unique value = 2
         lst=[] #list kolom dengan tipe data object
         le = LabelEncoder() #fungsi transform categorical data -> numerical data
-        dataframe = dataset
 
         #mencari kolom dengan unique value = 2
-        for i in range (len(dataframe.columns)):         
-            if dataframe[dataframe.columns[i]].nunique() == 2 or dataframe.columns[i] == 'Jalur Masuk':
+        for i in range (len(dataset.columns)):         
+            if dataset[dataset.columns[i]].nunique() == 2 or dataset.columns[i] == 'Jalur masuk':
                 cls.append(i)
         #mengganti kolom dengan unique value = 2 dari data categorical -> numeric
         for i in cls:
-            dataframe[dataframe.columns[i]] = le.fit_transform(dataframe[dataframe.columns[i]])
+            dataset[dataset.columns[i]] = le.fit_transform(dataset[dataset.columns[i]])
         
         #mencari data dengan tipe data object
-        for i in range (len(dataframe.columns)):
-            if dataframe[dataframe.columns[i]].dtype == "object":
+        for i in range (len(dataset.columns)):
+            if dataset[dataset.columns[i]].dtype == "object":
                 lst.append(i)
 
         #menghapus data dengan tipe data object
-        dataframe = dataframe.drop(dataframe.columns[lst], axis=1)
-        return dataframe
-
+        dataset = dataset.drop(dataset.columns[lst], axis=1)
+        return dataset
 
 
 
     #fungsi seleksi fitur
     def select_feature_target(dataset):
         #praproses data 
-        dataframe = preprocess(dataset)
+        data_prepro = preprocess(dataset)
         #menentukan feature dan label
-        X = dataframe.iloc[:,:-1]
-        y = dataframe.iloc[:,-1:]
-        return dataframe, X, y
-
-    st.write(dataframe)
+        X = data_prepro.iloc[:,:-1]
+        y = data_prepro.iloc[:,-1:]
+        return data_prepro, X, y
 
     #memanggil fungsi seleksi fitur
     data, X, y = select_feature_target(dataframe)
@@ -75,6 +76,7 @@ def app():
 
     #menampilkan target
     st.write('Target',list(data.iloc[:,-1:].keys()))
+
 
 
 
@@ -261,8 +263,14 @@ def app():
     #menampilkan hasil akurasi
     st.write(f'Accuracy =', acc)
 
+    global results
+
     #menampilkan dataframe
     st.write('Dataframe')
+    del dataframe[dataframe.columns[-1]]
     X_test['Hasil_Prediksi'] = y_pred
-    res =  X_test['Hasil_Prediksi'].map({0:'Diterima', 1:'Ditolak'})
-    st.write(res)
+    X_test['Hasil_Prediksi'] =  X_test['Hasil_Prediksi'].map({0:'Diterima', 1:'Ditolak'})
+    results = pd.concat([df,X_test['Hasil_Prediksi'] ], axis=1, join="inner")
+    st.write(results)
+  
+
